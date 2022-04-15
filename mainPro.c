@@ -336,7 +336,7 @@ int main()
         //语音线程
     pthread_create(&voicepthread,NULL,voice_thread,NULL);
     // //     //socket线程
-    pthread_create(&socketpthread,NULL,socket_thread,NULL);
+    //pthread_create(&socketpthread,NULL,socket_thread,NULL);
     // //     //摄像头线程
      pthread_create(&cameThread1, NULL, ThreadFun, NULL);
     // //     //火灾线程
