@@ -1,0 +1,122 @@
+// void *read_thread(void* datas){
+//     int n_read;
+//     //printf("%d\n",c_fd);
+//     memset(socket_Handler->command,'\0',sizeof(socket_Handler->command));
+//     while (1)
+//     {
+//          n_read = read(c_fd,socket_Handler->command,sizeof(socket_Handler->command));  
+//     if(n_read == -1 ){
+//         perror("read");
+//     }else if(n_read > 0){
+//         printf("socket command size is %d data is %s\n",n_read,socket_Handler->command);
+//         memset(socket_Handler->command,'\0',sizeof(socket_Handler->command));
+//     }else
+//     {
+//         //printf("client quit\n");
+//     }
+//     }
+// }
+void *socket_thread(void* datas)
+{
+    pthread_t t1;
+    pthread_t t2;
+    pthread_t readpthread;
+    int n_read = 0 ;
+    memset(&c_addr,0,sizeof(struct sockaddr_in));
+    int clen = sizeof(struct sockaddr_in);
+    socket_Handler = findByCommandName("socketSever",pCommandHand);
+    if(socket_Handler == NULL){
+        printf("find socket erro\n");
+        pthread_exit(NULL);
+    }else{
+        printf("%s init success\n",socket_Handler->CommandName);
+    }
+    socket_Handler->Init(socket_Handler,NULL,NULL);
+    
+    while (1)
+    {
+        //c_fd = accept(socket_Handler->sfd,(struct sockaddr *)&c_addr,&clen);
+        // pthread_create(&readpthread,NULL,read_thread,NULL);
+        if(i==0)  //用来判断客户端的连接循序，和区分客户端 此为第一个客户端连接
+                {
+                    //因为当客户端每连接一个会产生一个新的   描述字，所以可以用数组来存储，以便区分                     
+                    c_fd[i] =accept(socket_Handler->sfd,(struct sockaddr *)&c_addr,&clen); 
+                    i=1;    //当第一个客户端连接完后，赋值1代表下一个客户端为第二个
+                    printf("我是0");
+                }else{    //第二个客户端连接，同上
+                    c_fd[i] =accept(socket_Handler->sfd,(struct sockaddr *)&c_addr,&clen);
+                    i =2;
+                    printf("我是1\n");
+                }
+                if(c_fd[0] == -1){  //用描述字判断第一个客户端连接是否成功
+                    perror("accept");
+                }else              //成功则开启与第一个客户端连接的线程
+                {
+                        ret =pthread_create(&t1,NULL,thread1,NULL);    //创建thread1线程
+                        if(ret == 0) //创建线程成功
+                        {
+                            //printf("main:  t1\n");
+                        }
+                }
+                if(c_fd[1] == -1)  //用描述字判断第二个客户端连接是否成功
+                {
+                        perror("accept");
+                }else{    //成功则开启与第二个客户端连接的线程
+                        ret =pthread_create(&t2,NULL,thread2,NULL);    //创建thread2线程
+                        if(ret == 0)
+                        {
+                           // printf("main:  t2\n");
+                        }
+                }
+                if(ret == 0)
+                {
+                    //printf("main:create t1 success \n");
+                }
+    }
+}
+void *thread1(void *arg)   //客户端1线程操作
+{
+        int n_read;
+        char readBuf[128];  //接收存储的信息
+
+        while(1)
+        {
+            memset(readBuf,0,sizeof(readBuf)); // 函数常用于内存空间初始化
+            //printf("gte connect: %s\n",inet_ntoa(c_addr.sin_addr)); //打印出客户端的ip
+            n_read = read(c_fd[0],readBuf,128);  //读取该客户端发来的信息
+            if(n_read == -1)  //读取不成功
+            {
+                perror("read");
+                break;
+            } else if(n_read == 0){
+                close(c_fd[0]);
+                pthread_exit(NULL);
+            }else{
+                printf("get message:%s %d %s\n",inet_ntoa(c_addr.sin_addr),n_read,readBuf); //打印读取到的字符长度和内容
+                //write(c_fd[1],readBuf,strlen(readBuf)); //将第一个客户端的信息发送给c_fd[1],也就是第二个客户端，完成客户端之间的通信
+            }
+        }
+}
+void *thread2(void *arg)
+{
+        
+        char readBuf1[128];
+        int n_read1;
+    
+        while(1)
+        {
+            memset(readBuf1,0,sizeof(readBuf1));
+            //printf("gte connect: %s\n",inet_ntoa(c_addr.sin_addr));
+            n_read1 = read(c_fd[1],readBuf1,128);   
+            if(n_read1 == -1)
+            {
+                perror("read");
+            }
+            else if(n_read1 == 0){
+                close(c_fd[1]);
+                pthread_exit(NULL);
+            }else{
+                printf("get message:%s %d %s\n",inet_ntoa(c_addr.sin_addr),n_read1,readBuf1);
+            }
+        }
+}
